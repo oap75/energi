@@ -1,0 +1,29 @@
+image: docker:19.03.8
+
+stages:
+  - build
+  - deploy
+services:
+  - docker:dind
+
+Build:
+  stage: build
+  only:
+    - main 
+  script:
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker build --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA
+  tags:
+    - docker
+
+Deploy:
+  stage: deploy
+  only:
+    - main
+  image: registry.gitlab.com/f367/oap75:kubectl  # this is a docker image that I built for kubernetes infrastructure and it is in a private repository 
+  script:
+    - envsubst < deployment/k8s/statefulset.yaml > deployment/k8s/statefulset-new.yaml
+    - sed -i "s/<VERSION>/${CI_COMMIT_SHORT_SHA}/g" deployment/k8s/statefulset.yaml
+    - kubectl apply -f deployment/k8s/statefulset-new.yaml 
+

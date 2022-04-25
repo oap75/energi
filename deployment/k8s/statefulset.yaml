@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: energi
+  name: energi
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: energi
+  serviceName: energi
+  template:
+    metadata:
+      labels:
+        app: energi
+    spec:
+      containers:
+      - image: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA
+        imagePullPolicy: IfNotPresent
+        name: energi
+        resources:
+          requests:
+            memory: "100Mi"
+            cpu: "0.5"            
+          limits:
+            memory: "200Mi"        
+            cpu: "1"            
+        volumeMounts:
+        - mountPath: /home/energi
+          name: data
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: block-storage
