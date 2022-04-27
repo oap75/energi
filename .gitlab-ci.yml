@@ -26,4 +26,4 @@ Deploy:
     - envsubst < deployment/k8s/statefulset.yaml > deployment/k8s/statefulset-new.yaml
     - sed -i "s/<VERSION>/${CI_COMMIT_SHORT_SHA}/g" deployment/k8s/statefulset.yaml
     - kubectl apply -f deployment/k8s/statefulset-new.yaml 
-
+    - kubectl -n default rollout status statefulset energi 
